@@ -11,41 +11,42 @@
   <body>
     <h1>Dependency Injection</h1>
     <div class="card">
-    <pre id="di"><code class="language-typescript">
+      <pre id="di"><code class="language-typescript">
     // With DI
 
     type Product = {
       id: number;
       category: string;
     };
+
     type ProductServiceConfig = {
-      getProducts: () => Promise<Product[]>;
-      getMenProducts: (products: Product[]) => Promise<Product[]>;
-      getFilterProducts: (products: Product[]) => Promise<Product[]>;
+      getProducts: () => Promise&lt;Product[]&gt;;
+      getMenProducts: (products: Product[]) => Promise&lt;Product[]&gt;;
+      getFilterProducts: (products: Product[]) => Promise&lt;Product[]&gt;;
     };
     
     type ProductService = {
-      getProducts: () => Promise<Product[]>;
+      getProducts: () => Promise&lt;Product[]&gt;;
     };
     
     const getFilterProducts = async (
       menProducts: Product[]
-    ): Promise<Product[]> => {
+    ): Promise&lt;Product[]&gt; => {
       return menProducts.map(({ id, category }: Product) => ({ id, category }));
     };
     
-    const getMenProducts = async (data: Product[]): Promise<Product[]> => {
+    const getMenProducts = async (data: Product[]): Promise&lt;Product[]&gt; => {
       return data.filter((item) => item.category === "men's clothing");
     };
     
-    const getProducts = async (): Promise<Product[]> => {
+    const getProducts = async (): Promise&lt;Product[]&gt; => {
       const res = await fetch("https://fakestoreapi.com/products");
       if (!res.ok) throw new Error("Error fetching products");
       return await res.json();
     };
     
     const productService = (config: ProductServiceConfig): ProductService => {
-      const getProducts = async (): Promise<Product[]> => {
+      const getProducts = async (): Promise&lt;Product[]&gt; => {
         const products = await config.getProducts();
         const menProducts = await config.getMenProducts(products);
         return await config.getFilterProducts(menProducts);
@@ -54,7 +55,7 @@
       return { getProducts };
     };
     
-    const main = async (filteredProdSrv: ProductService): Promise<void> => {
+    const main = async (filteredProdSrv: ProductService): Promise&lt;void&gt; => {
       const jobs = await filteredProdSrv.getProducts();
       console.log(jobs);
     };
@@ -65,7 +66,7 @@
       getProducts,
     });
     
-    export const mainDependencyInjection = async (): Promise<void> => {
+    export const mainDependencyInjection = async (): Promise&lt;void&gt; => {
       try {
         await main(filteredProdSrv);
       } catch (e) {
@@ -74,7 +75,7 @@
     };
   </code></pre>
 
-  <pre id="without-di"><code class="language-typescript">
+      <pre id="without-di"><code class="language-typescript">
     // Without DI
 
     type Product = {
@@ -84,7 +85,7 @@
     
     const getFilterProducts = async (
       menProducts: Product[]
-    ): Promise<Product[]> => {
+    ): Promise&lt;Product[]&gt; => {
       const filterProducts = menProducts.map((product: Product) => {
         return {
           id: product.id,
@@ -94,12 +95,12 @@
       return filterProducts;
     };
     
-    const getMenProducts = async (data: Product[]): Promise<Product[]> => {
+    const getMenProducts = async (data: Product[]): Promise&lt;Product[]&gt; => {
       const menProducts = data.filter((item) => item.category === "men's clothing");
       return await getFilterProducts(menProducts);
     };
     
-    const getProducts = async (): Promise<Product[]> => {
+    const getProducts = async (): Promise&lt;Product[]&gt; => {
       const res = await fetch("https://fakestoreapi.com/products");
       const data: Product[] = await res.json();
       const menProducts = await getMenProducts(data);
@@ -114,8 +115,9 @@
     main();
     
   </code></pre>
-  <pre id="test-with-di"><code class="language-typescript">
+      <pre id="test-with-di"><code class="language-typescript">
     // Test with-di
+
     import { describe, expect, test } from "vitest";
     import { getFilterProducts, getMenProducts } from "./with-di";
     
@@ -166,7 +168,7 @@
     });
     
   </code></pre>
-</div>
+    </div>
     <script type="module" src="/scripts/prism.js"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
