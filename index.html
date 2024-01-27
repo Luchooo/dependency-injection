@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dependency Injection + TS</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/css/prism.css" />
+  </head>
+  <body>
+    <h1>Dependency Injection</h1>
+    <div class="card">
+    <pre id="di"><code class="language-typescript">
+    // With DI
+
+    type Product = {
+      id: number;
+      category: string;
+    };
+    type ProductServiceConfig = {
+      getProducts: () => Promise<Product[]>;
+      getMenProducts: (products: Product[]) => Promise<Product[]>;
+      getFilterProducts: (products: Product[]) => Promise<Product[]>;
+    };
+    
+    type ProductService = {
+      getProducts: () => Promise<Product[]>;
+    };
+    
+    const getFilterProducts = async (
+      menProducts: Product[]
+    ): Promise<Product[]> => {
+      return menProducts.map(({ id, category }: Product) => ({ id, category }));
+    };
+    
+    const getMenProducts = async (data: Product[]): Promise<Product[]> => {
+      return data.filter((item) => item.category === "men's clothing");
+    };
+    
+    const getProducts = async (): Promise<Product[]> => {
+      const res = await fetch("https://fakestoreapi.com/products");
+      if (!res.ok) throw new Error("Error fetching products");
+      return await res.json();
+    };
+    
+    const productService = (config: ProductServiceConfig): ProductService => {
+      const getProducts = async (): Promise<Product[]> => {
+        const products = await config.getProducts();
+        const menProducts = await config.getMenProducts(products);
+        return await config.getFilterProducts(menProducts);
+      };
+    
+      return { getProducts };
+    };
+    
+    const main = async (filteredProdSrv: ProductService): Promise<void> => {
+      const jobs = await filteredProdSrv.getProducts();
+      console.log(jobs);
+    };
+    
+    const filteredProdSrv = productService({
+      getFilterProducts,
+      getMenProducts,
+      getProducts,
+    });
+    
+    export const mainDependencyInjection = async (): Promise<void> => {
+      try {
+        await main(filteredProdSrv);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  </code></pre>
+
+  <pre id="without-di"><code class="language-typescript">
+    // Without DI
+
+    type Product = {
+      id: number;
+      category: string;
+    };
+    
+    const getFilterProducts = async (
+      menProducts: Product[]
+    ): Promise<Product[]> => {
+      const filterProducts = menProducts.map((product: Product) => {
+        return {
+          id: product.id,
+          category: product.category,
+        };
+      });
+      return filterProducts;
+    };
+    
+    const getMenProducts = async (data: Product[]): Promise<Product[]> => {
+      const menProducts = data.filter((item) => item.category === "men's clothing");
+      return await getFilterProducts(menProducts);
+    };
+    
+    const getProducts = async (): Promise<Product[]> => {
+      const res = await fetch("https://fakestoreapi.com/products");
+      const data: Product[] = await res.json();
+      const menProducts = await getMenProducts(data);
+      return menProducts;
+    };
+    
+    const main = async () => {
+      const jobs = await getProducts();
+      console.log(jobs);
+    };
+    
+    main();
+    
+  </code></pre>
+  <pre id="test-with-di"><code class="language-typescript">
+    // Test with-di
+    import { describe, expect, test } from "vitest";
+    import { getFilterProducts, getMenProducts } from "./with-di";
+    
+    describe("getMenProducts function", () => {
+      test("Should be size 1 length", async () => {
+        const products = [
+          { id: 1, category: "jeweler's" },
+          { id: 2, category: "men's clothing" },
+        ];
+        const newProducts = await getMenProducts(products);
+        expect(newProducts.length).toBe(1);
+        expect(newProducts).toEqual([
+          {
+            id: 2,
+            category: "men's clothing",
+          },
+        ]);
+      });
+    
+      test("Should be size 0 length", async () => {
+        const products = [
+          { id: 1, category: "jeweler's" },
+          { id: 2, category: "food" },
+        ];
+        const newProducts = await getMenProducts(products);
+        expect(newProducts.length).toBe(0);
+      });
+    });
+    
+    describe("getFilterProducts function", () => {
+      test("should return an array with only the id and category property", async () => {
+        type Product = {
+          id: number;
+          category: string;
+          title?: string;
+        };
+    
+        const menProducts: Product[] = [
+          { id: 1, category: "food", title: "product one" },
+          { id: 2, category: "food", title: "product two" },
+        ];
+        const result = await getFilterProducts(menProducts);
+        expect(result).toEqual([
+          { id: 1, category: "food" },
+          { id: 2, category: "food" },
+        ]);
+      });
+    });
+    
+  </code></pre>
+</div>
+    <script type="module" src="/scripts/prism.js"></script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
